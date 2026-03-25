@@ -5,7 +5,7 @@ const contentSchema = new mongoose.Schema({
     link: { type: String, required: true },
     category: { type: String, enum: ['movie', 'series'], default: 'movie' },
     genre: { type: String, default: 'مضاف حديثاً' },
-    poster: { type: String, required: true }, 
+    poster: { type: String, required: true },
     isVIP: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
