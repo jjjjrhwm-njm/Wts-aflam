@@ -1,14 +1,17 @@
 const TelegramBot = require('node-telegram-bot-api');
 const User = require('./models/User');
 const Content = require('./models/Content');
-const env = require('./config/env');
 
-const bot = new TelegramBot(env.BOT_TOKEN, { polling: true });
+// سحب المتغيرات مباشرة من راندر
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const ADMIN_ID = process.env.ADMIN_ID;
+const STORAGE_CHANNEL = '@nejm_njm';
+
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const userStates = new Map();
 
-const isAdmin = (chatId) => String(chatId).trim() === String(env.ADMIN_ID).trim();
+const isAdmin = (chatId) => String(chatId).trim() === String(ADMIN_ID).trim();
 
-// تعديل: بدلاً من /start، نستمع لكلمة "نجم أفلام"
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const username = msg.from.username || 'مستخدم';
@@ -36,16 +39,15 @@ bot.on('message', async (msg) => {
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: '⭐️ اشتراك VIP (100 نجمة)', callback_data: 'subscribe_vip' }],
-                        [{ text: '📱 فتح التطبيق', web_app: { url: 'https://threew3t3s3wts.onrender.com' } }]
+                        [{ text: '📱 فتح التطبيق', web_app: { url: `https://${process.env.RENDER_HOST}` } }]
                     ]
                 }
             };
             bot.sendMessage(chatId, `مرحباً ${username} في StreamFlix! 🎬`, opts);
         }
-        return; // نمنع استمرار المعالجة بعد تنفيذ الأمر
+        return; 
     }
 
-    // باقي المعالجة للأدمن (مثل نشر الأفلام) تبقى كما هي
     if (!isAdmin(chatId)) return;
 
     const state = userStates.get(chatId);
@@ -60,7 +62,7 @@ bot.on('message', async (msg) => {
     else if (state.step === 'waiting_link' && msg.text) {
         const loadingMsg = await bot.sendMessage(chatId, '⏳ جاري شفط الفيلم ورفعه لقناتك @nejm_njm... انتظر قليلاً.');
         try {
-            const storageMsg = await bot.sendVideo(env.STORAGE_CHANNEL, msg.text, {
+            const storageMsg = await bot.sendVideo(STORAGE_CHANNEL, msg.text, {
                 caption: `🎬 فيلم جديد مضاف للتطبيق\nالمصدر: سحب تلقائي`
             });
 
@@ -85,7 +87,6 @@ bot.on('message', async (msg) => {
     }
 });
 
-// معالجة الأزرار (callback_query) تبقى كما هي
 bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
