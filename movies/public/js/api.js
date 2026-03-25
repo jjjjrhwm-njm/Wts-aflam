@@ -8,20 +8,31 @@ const API = {
             });
             const data = await res.json();
             return data.success ? data : { isVIP: false };
-        } catch (error) { return { isVIP: false }; }
+        } catch (error) {
+            console.error("API Error (Auth):", error);
+            return { isVIP: false };
+        }
     },
+
     async getPublicMovies() {
         try {
             const res = await fetch('/api/content');
             const data = await res.json();
             return data.success ? data.data : [];
-        } catch (error) { return []; }
+        } catch (error) {
+            console.error("API Error (Public Content):", error);
+            return [];
+        }
     },
+
     async getVIPMovies() {
         try {
             const res = await fetch('/api/content/vip');
             const data = await res.json();
             return data.success ? data.data : [];
-        } catch (error) { return []; }
+        } catch (error) {
+            console.error("API Error (VIP Content):", error);
+            return [];
+        }
     }
 };
