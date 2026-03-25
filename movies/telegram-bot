@@ -1,0 +1,63 @@
+const TelegramBot = require('node-telegram-bot-api');
+const User = require('./models/User');
+const Content = require('./models/Content');
+
+const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+const userStates = new Map();
+const isAdmin = (chatId) => String(chatId).trim() === String(process.env.ADMIN_ID).trim();
+
+// تم تغيير الأمر من /start إلى "نجم أفلام" كما طلبت!
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text || '';
+    
+    if (text === 'نجم أفلام') {
+        if (isAdmin(chatId)) {
+            const opts = { reply_markup: { inline_keyboard: [ [{ text: '📢 نشر محتوى عام', callback_data: 'pub_public' }], [{ text: '👑 نشر محتوى VIP', callback_data: 'pub_vip' }], [{ text: '❌ إلغاء العملية', callback_data: 'cancel' }] ] } };
+            bot.sendMessage(chatId, '🎬 **لوحة تحكم ستريم فليكس**\nجاهز لشفط الأفلام؟', { parse_mode: 'Markdown', ...opts });
+        } else {
+            bot.sendMessage(chatId, `مرحباً بك في StreamFlix! 🎬`, { reply_markup: { inline_keyboard: [ [{ text: '📱 فتح التطبيق', web_app: { url: `https://${process.env.RENDER_HOST}` } }] ] } });
+        }
+        return;
+    }
+
+    // متابعة الشفط كما كان تماماً
+    if (!isAdmin(chatId)) return;
+    const state = userStates.get(chatId);
+    if (!state) return;
+
+    if (state.step === 'waiting_poster' && msg.photo) {
+        state.poster = msg.photo[msg.photo.length - 1].file_id;
+        state.step = 'waiting_link';
+        userStates.set(chatId, state);
+        bot.sendMessage(chatId, '🔗 أرسل رابط الفيلم المباشر (MP4):');
+    } 
+    else if (state.step === 'waiting_link' && text) {
+        const loadingMsg = await bot.sendMessage(chatId, '⏳ جاري الشفط والرفع لمخزنك...');
+        try {
+            const storageMsg = await bot.sendVideo('@nejm_njm', text, { caption: `🎬 فيلم جديد مضاف للتطبيق` });
+            state.link = storageMsg.video.file_id;
+            state.step = 'waiting_title';
+            userStates.set(chatId, state);
+            bot.editMessageText('✅ تم الرفع! الآن أرسل اسم الفيلم:', { chat_id: chatId, message_id: loadingMsg.message_id });
+        } catch (e) { bot.sendMessage(chatId, '❌ فشل السحب.'); }
+    }
+    else if (state.step === 'waiting_title' && text) {
+        await new Content({ title: text, link: state.link, poster: state.poster, isVIP: state.isVIP }).save();
+        userStates.delete(chatId);
+        bot.sendMessage(chatId, `✅ تم الحفظ! الفيلم متاح الآن في التطبيق.`);
+    }
+});
+
+bot.on('callback_query', async (query) => {
+    const chatId = query.message.chat.id;
+    await bot.answerCallbackQuery(query.id);
+    if (!isAdmin(chatId)) return;
+    if (query.data === 'pub_public' || query.data === 'pub_vip') {
+        userStates.set(chatId, { step: 'waiting_poster', isVIP: query.data === 'pub_vip' });
+        bot.sendMessage(chatId, '📸 أرسل صورة الغلاف (البوستر):');
+    } else if (query.data === 'cancel') {
+        userStates.delete(chatId); bot.sendMessage(chatId, '✅ تم الإلغاء.');
+    }
+});
+module.exports = bot; // مهم لكي تستخدمه مسارات content.js
