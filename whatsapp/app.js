@@ -1479,7 +1479,7 @@ module.exports = function(app) {
     // ============================================
 
     app.get("/ping", (req, res) => res.send("💓"));
-    app.get("/", (req, res) => {
+    app.get("/bot-status", (req, res) => {
         if (qrImage === "DONE") {
             res.send(`
                 <html>
