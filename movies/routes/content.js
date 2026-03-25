@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Content = require('../models/Content');
 const axios = require('axios');
-const bot = require('../telegram-bot'); 
+const TelegramBot = require('node-telegram-bot-api');
+const env = require('../config/env');
+
+const bot = new TelegramBot(env.BOT_TOKEN);
 
 router.get('/', async (req, res) => {
     try {
@@ -25,7 +28,7 @@ router.get('/vip', async (req, res) => {
 router.get('/stream/:fileId', async (req, res) => {
     try {
         const link = await bot.getFileLink(req.params.fileId);
-        res.redirect(link); 
+        res.redirect(link);
     } catch (error) {
         res.status(500).send('Error streaming from storage');
     }
