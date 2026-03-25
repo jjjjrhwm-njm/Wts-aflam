@@ -1,37 +1,54 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const https = require('https');
 
 const app = express();
+
+// إعدادات الـ Middleware الأساسية
 app.use(cors());
 app.use(express.json());
 
-// تنظيف رابط راندر لتجنب الأخطاء (حتى لو كتبته مع http أو بدون)
-const rawHost = process.env.RENDER_HOST || 'wts-aflam.onrender.com';
-const cleanHost = rawHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+// نظام النبض (Ping) كل 5 دقائق لـ process.env.RENDER_HOST
+setInterval(() => {
+    const host = process.env.RENDER_HOST;
+    if (host) {
+        https.get(`https://${host}/ping`, (res) => {
+            console.log('💓 نبض النظام: مستقر');
+        }).on('error', () => {});
+    }
+}, 5 * 60 * 1000);
 
-// 1. مسار النبض المركزي
-app.get('/ping', (req, res) => res.send("💓 مستيقظ"));
+// ============================================
+// ربط وحدة الواتساب (تمرير تطبيق express)
+// ============================================
+require('./whatsapp/app')(app);
 
-// 2. تشغيل نظام الواتساب (سيأخذ مساراته الخاصة)
-require('./whatsapp/app')(app, cleanHost);
+// ============================================
+// ربط مسارات الأفلام
+// ============================================
+app.use('/api/content', require('./movies/routes/content'));
+app.use('/api/auth', require('./movies/routes/auth'));
 
-// 3. تشغيل نظام الأفلام (سيأخذ مساراته وواجهة المستخدم)
-require('./movies/app')(app);
+// ============================================
+// تقديم الملفات الثابتة للواجهة الأمامية للأفلام
+// ============================================
+app.use(express.static(path.join(__dirname, 'movies', 'public')));
 
-// 4. تشغيل السيرفر المدمج والنبض
+// ============================================
+// أي مسار غير موجود يعرض صفحة الأفلام الرئيسية
+// ============================================
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'movies', 'public', 'index.html'));
+});
+
+// ============================================
+// تشغيل السيرفر (لا توجد app.listen هنا لأن الواتساب لا يقوم بتشغيله)
+// ============================================
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log("=".repeat(50));
-    console.log(`🚀 [Master Server] يعمل بنجاح على المنفذ ${PORT}`);
-    console.log(`🌐 الرابط: https://${cleanHost}`);
-    console.log("=".repeat(50));
-
-    // نظام النبض الحديدي (كل 5 دقائق) لضمان عدم نوم راندر
-    setInterval(() => {
-        https.get(`https://${cleanHost}/ping`, (res) => {
-            if(res.statusCode === 200) console.log(`💓 نبض النظام: السيرفر مستيقظ`);
-        }).on('error', () => {});
-    }, 5 * 60 * 1000);
+    console.log('='.repeat(50));
+    console.log(`🚀 السيرفر الرئيسي يعمل على المنفذ ${PORT}`);
+    console.log(`🌐 الرابط: https://${process.env.RENDER_HOST}`);
+    console.log('='.repeat(50));
 });
