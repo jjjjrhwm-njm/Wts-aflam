@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const tg = window.Telegram.WebApp;
-    tg.expand(); 
+    tg.expand();
     tg.ready();
 
     let telegramId = "guest"; 
@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         telegramId = tg.initDataUnsafe.user.id;
     }
 
+    console.log("User Telegram ID:", telegramId);
+
     const userStatus = await API.checkUserStatus(telegramId);
+    
     UI.updateUserStatus(userStatus.isVIP);
 
     const publicMovies = await API.getPublicMovies();
@@ -16,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const allMovies = [...vipMovies, ...publicMovies];
     UI.renderHero(allMovies[0]);
+
     UI.renderMovies(publicMovies, 'publicMoviesGrid', false);
     UI.renderMovies(vipMovies, 'vipMoviesGrid', true);
 });
