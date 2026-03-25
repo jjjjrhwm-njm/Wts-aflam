@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StreamFlix Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="navbar" id="navbar">
+        <div class="logo">Stream<span>Flix</span> Pro</div>
+        <div class="user-status" id="userStatus">👤 VIP جاري التحقق...</div>
+    </header>
+
+    <section class="hero" id="heroSection" style="display:none"></section>
+
+    <main class="content-sections">
+        <h2 class="section-title vip-title">حصرياً للمشتركين 👑</h2>
+        <div class="grid-container" id="vipMoviesGrid"></div>
+
+        <h2 class="section-title">أحدث الأفلام والمسلسلات 📣</h2>
+        <div class="grid-container" id="publicMoviesGrid"></div>
+    </main>
+
+    <div id="playerModal" class="modal hidden">
+        <div class="modal-header">
+            <span id="playerTitle" class="player-title"></span>
+            <button class="close-btn" id="closePlayerBtn">✖</button>
+        </div>
+        <div class="video-wrapper">
+            </div>
+    </div>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> 
+    <script src="/js/api.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
