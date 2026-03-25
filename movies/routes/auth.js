@@ -16,7 +16,7 @@ router.post('/check', async (req, res) => {
         if (user.isVIP && user.vipUntil && user.vipUntil < now) {
             user.isVIP = false;
             await user.save();
-            isActuallyVIP = false; 
+            isActuallyVIP = false;
         }
 
         res.json({ success: true, isVIP: isActuallyVIP, user });
